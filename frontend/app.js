@@ -91,6 +91,8 @@ async function startScanner() {
   $('scannerView').classList.remove('hidden');
   $('scanMsg').textContent = '';
   try {
+    if (typeof Html5Qrcode === 'undefined') throw new Error('Scanner load nahi hua - internet check karke page refresh karo');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('Is browser mein camera nahi chalta - Chrome/Safari mein kholo');
     const formats = [
       Html5QrcodeSupportedFormats.QR_CODE,
       Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
@@ -106,7 +108,8 @@ async function startScanner() {
       () => {}
     );
   } catch (e) {
-    $('scanMsg').textContent = 'Camera nahi khula: ' + (e.message || e);
+    $('scanMsg').textContent = 'Camera nahi khula: ' + (e && e.message ? e.message : e) +
+      '. Tip: WhatsApp ke andar nahi, Chrome/Safari app mein kholo - ya neeche barcode number likh ke Search dabao.';
     $('scannerView').classList.add('hidden');
     $('scanHome').classList.remove('hidden');
   }
@@ -190,6 +193,16 @@ function renderResults(data, opts = {}) {
   pc.innerHTML = ''; pl.innerHTML = ''; ml.innerHTML = '';
 
   if (!data.found) {
+    if (data.barcodeOnly && data.maybe && data.maybe.length) {
+      pc.innerHTML = `<div><div class="pname">Barcode pehchana nahi gaya</div>
+        <div class="pmeta">${esc(data.message || '')}</div></div>`;
+      const lab = document.createElement('div');
+      lab.className = 'list-label';
+      lab.textContent = 'Barcode number se mile - shayad same, pakka nahi';
+      ml.appendChild(lab);
+      data.maybe.forEach(o => ml.appendChild(offerRow(o, true)));
+      return;
+    }
     $('scanMsg').textContent = data.message || 'Kuch nahi mila';
     $('results').classList.add('hidden');
     $('scanHome').classList.remove('hidden');
