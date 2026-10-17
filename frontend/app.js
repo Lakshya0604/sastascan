@@ -13,7 +13,8 @@ let categories = [];
 async function api(path, opts = {}) {
   // Render free tier cold-starts (~30-60s). Retry network failures with a friendly note.
   let lastErr = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  const WAITS = [5000, 10000, 20000, 30000]; // free Render wakes in ~30-60s
+  for (let attempt = 0; attempt <= WAITS.length; attempt++) {
     let res;
     try {
       res = await fetch(API + path, {
@@ -26,12 +27,14 @@ async function api(path, opts = {}) {
       });
     } catch (e) {
       lastErr = e;
-      if (attempt < 2) {
-        if (typeof setMsg === 'function') setMsg('Server jaag raha hai, thoda ruko...');
-        await new Promise(r => setTimeout(r, 4000 * (attempt + 1)));
+      if (attempt < WAITS.length) {
+        if (typeof setMsg === 'function') setMsg('Server jaag raha hai (free plan, pehli baar ~1 min lagta hai)...');
+        const am = $('authMsg'); if (am && !token) am.textContent = 'Server jaag raha hai, ~1 min ruko...';
+        const sm = $('scanMsg'); if (sm) sm.textContent = 'Server jaag raha hai, ~1 min ruko...';
+        await new Promise(r => setTimeout(r, WAITS[attempt]));
         continue;
       }
-      throw new Error('Server se connect nahi ho paya. 1 minute baad phir try karo.');
+      throw new Error('Server abhi jaag nahi paya. 1-2 minute baad phir try karo (free plan ka cold start hai).');
     }
     const data = await res.json().catch(() => ({}));
     if (res.status === 401) { logout(); throw new Error(data.error || 'Login karo'); }
@@ -402,6 +405,7 @@ $('sCancel').onclick = () => $('saleForm').classList.add('hidden');
 
 (async function init() {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  fetch(API + '/health').catch(() => {}); // wake the free Render dyno while the user reads the screen
   try { categories = await api('/sales/categories'); } catch (e) { categories = ['Phones & Electronics','Kitchen & Utensils','Grocery & Daily Needs','Fashion & Footwear','Furniture','Beauty & Personal Care','Books & Stationery','Other']; }
   $('sCat').innerHTML = categories.map(c => `<option>${esc(c)}</option>`).join('');
   renderChips();
