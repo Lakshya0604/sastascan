@@ -11,18 +11,34 @@ let authMode = 'login';
 let categories = [];
 
 async function api(path, opts = {}) {
-  const res = await fetch(API + path, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: 'Bearer ' + token } : {}),
-      ...(opts.headers || {})
+  // Render free tier cold-starts (~30-60s). Retry network failures with a friendly note.
+  let lastErr = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let res;
+    try {
+      res = await fetch(API + path, {
+        ...opts,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: 'Bearer ' + token } : {}),
+          ...(opts.headers || {})
+        }
+      });
+    } catch (e) {
+      lastErr = e;
+      if (attempt < 2) {
+        if (typeof setMsg === 'function') setMsg('Server jaag raha hai, thoda ruko...');
+        await new Promise(r => setTimeout(r, 4000 * (attempt + 1)));
+        continue;
+      }
+      throw new Error('Server se connect nahi ho paya. 1 minute baad phir try karo.');
     }
-  });
-  const data = await res.json().catch(() => ({}));
-  if (res.status === 401) { logout(); throw new Error(data.error || 'Login karo'); }
-  if (!res.ok) throw new Error(data.error || 'Kuch gadbad ho gayi');
-  return data;
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) { logout(); throw new Error(data.error || 'Login karo'); }
+    if (!res.ok) throw new Error(data.error || 'Kuch gadbad ho gayi');
+    return data;
+  }
+  throw lastErr || new Error('Server se connect nahi ho paya.');
 }
 
 /* ---------- navigation ---------- */
