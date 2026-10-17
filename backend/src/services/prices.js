@@ -71,7 +71,7 @@ async function cachedSet(key, val) {
 }
 
 async function fetchPrices(identity, barcode, { approximate = false, queryOverride = null } = {}) {
-  const cacheKey = approximate ? 'q:' + (queryOverride || '') : 'b:' + barcode;
+  const cacheKey = (approximate ? 'q:' : 'b:') + 'v2:' + (approximate ? (queryOverride || '') : barcode);
   const hit = await cachedGet(cacheKey);
   if (hit) return { ...hit, cached: true };
 
@@ -133,10 +133,14 @@ async function fetchPrices(identity, barcode, { approximate = false, queryOverri
     if (approximate && !wantsAccessory && ACC.test(r.title || '')) continue; // phone query -> skip covers/skins
     if (approximate) { maybe.push(offer); continue; }
     let score = matchScore(identity ? identity.title : '', r.title, identity && identity.brand);
-    // Size/qty mismatch (e.g. 45gm pack vs 200g) means a different product variant.
+    // Variant checks: multipack/combo, conflicting size, or unverifiable size when the
+    // product size is known -> not provably the same SKU, so never "exact".
     const aSize = sizeKey(identity && (identity.size || identity.title));
     const bSize = sizeKey(r.title);
-    if (aSize && bSize && aSize !== bSize) score = Math.min(score, 0.5);
+    const PACK = /pack\s*of\s*\d+|\b\d+\s*[x\u00d7]\s*\d+\b|\bcombo\b|\bmultipack\b|\bfamily\s*pack\b|\b\d+\s*(pcs|pieces|units|sachets?)\b/i;
+    if (PACK.test(r.title || '')) score = Math.min(score, 0.5);
+    else if (aSize && !bSize) score = Math.min(score, 0.5); // size missing -> cannot verify same variant
+    else if (aSize && bSize && aSize !== bSize) score = Math.min(score, 0.5);
     (score >= 0.65 ? exact : maybe).push(offer);
   }
   exact.sort((a, b) => a.price - b.price);
