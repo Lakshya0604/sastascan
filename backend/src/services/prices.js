@@ -141,7 +141,9 @@ async function fetchPrices(identity, barcode, { approximate = false, queryOverri
     if (PACK.test(r.title || '')) score = Math.min(score, 0.5);
     else if (aSize && !bSize) score = Math.min(score, 0.5); // size missing -> cannot verify same variant
     else if (aSize && bSize && aSize !== bSize) score = Math.min(score, 0.5);
-    (score >= 0.65 ? exact : maybe).push(offer);
+    if (score >= 0.65) exact.push(offer);
+    else if (score >= 0.2) maybe.push(offer);
+    // below 0.2: unrelated noise from the barcode query (e.g. earphones for butter) - drop
   }
   exact.sort((a, b) => a.price - b.price);
   maybe.sort((a, b) => a.price - b.price);
