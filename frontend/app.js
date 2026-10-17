@@ -221,6 +221,14 @@ function renderResults(data, opts = {}) {
     pc.innerHTML = `<div><div class="pname">"${esc(opts.query)}" ke liye online prices</div>
       <div class="pmeta">Photo/naam se search - ye similar products hain, exact model nahi</div></div>`;
   }
+  if (data.at) {
+    const asof = document.createElement('div');
+    asof.className = 'pmeta';
+    asof.style.padding = '0 2px 6px';
+    asof.textContent = 'Rates ' + new Date(data.at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) +
+      ' ko live source se' + (data.cached ? ' (30 min ke andar refresh)' : '');
+    pc.appendChild(asof);
+  }
   const exactLabel = document.createElement('div');
   exactLabel.className = 'list-label';
   if (data.exact && data.exact.length) {
