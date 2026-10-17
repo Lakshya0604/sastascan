@@ -97,10 +97,13 @@ async function fetchPrices(identity, barcode, { approximate = false, queryOverri
   q = (q || '').trim();
   if (q) queries.push(q);
   const settled = await Promise.allSettled(queries.map(async (query) => {
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try { return await searlo.shoppingIndia(query, 30); }
       catch (e) {
-        if (e.code === 'RETRYABLE') { await new Promise(r => setTimeout(r, 2500)); continue; }
+        // Free tier is burst-limited per minute: back off and retry 429s too.
+        if (e.code === 'RETRYABLE' || e.code === 'QUOTA') {
+          if (attempt < 2) { await new Promise(r => setTimeout(r, 5000 * (attempt + 1))); continue; }
+        }
         throw e;
       }
     }
