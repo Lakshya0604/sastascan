@@ -67,10 +67,12 @@ function sizeKey(s) {
   return (u.startsWith('k') || u === 'gm' || u === 'gms' || u.startsWith('gram') || u === 'g') ? 'w' + v : 'v' + v;
 }
 
+const PRICE_TTL_MS = 30 * 60 * 1000; // rates refresh every 30 min - prices change fast
 async function cachedGet(key) {
-  if (mem()) return mem().prices.get(key) || null;
-  const row = await PriceCache.findOne({ key }).lean();
-  return row ? { exact: row.exact, maybe: row.maybe } : null;
+  const fresh = (row) => row && (Date.now() - new Date(row.createdAt).getTime()) < PRICE_TTL_MS
+    ? { exact: row.exact, maybe: row.maybe, at: new Date(row.createdAt).toISOString() } : null;
+  if (mem()) return fresh(mem().prices.get(key));
+  return fresh(await PriceCache.findOne({ key }).lean());
 }
 async function cachedSet(key, val) {
   if (mem()) { mem().prices.set(key, val); return; }
@@ -155,7 +157,7 @@ async function fetchPrices(identity, barcode, { approximate = false, queryOverri
   }
   exact.sort((a, b) => a.price - b.price);
   maybe.sort((a, b) => a.price - b.price);
-  const out = { exact: exact.slice(0, 15), maybe: maybe.slice(0, 15) };
+  const out = { exact: exact.slice(0, 15), maybe: maybe.slice(0, 15), at: new Date().toISOString() };
   await cachedSet(cacheKey, out);
   return { ...out, cached: false };
 }
