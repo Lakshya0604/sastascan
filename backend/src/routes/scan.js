@@ -11,9 +11,14 @@ router.get('/scan/:barcode', requireAuth, async (req, res) => {
   try {
     const { identity, cached } = await identify(req.params.barcode);
     if (!identity) {
+      // Barcode unknown everywhere: still try a raw-barcode price search. Exact-match
+      // rule intact - with no verified identity, NOTHING is labelled "same product".
+      const prices = await fetchPrices(null, req.params.barcode);
       return res.json({
         found: false,
-        message: 'Ye barcode free databases mein nahi mila. Naam likh ke search karo ya photo try karo.'
+        barcodeOnly: true,
+        message: 'Ye barcode free databases mein nahi mila. Barcode number se jo mile wo neeche "shayad same" hain - pakka nahi. Behtar result ke liye product ka naam likh ke search karo.',
+        ...prices
       });
     }
     const prices = await fetchPrices(identity, req.params.barcode);
