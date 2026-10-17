@@ -5,13 +5,9 @@ const cors = require('cors');
 const app = express();
 app.use(express.json({ limit: '2mb' }));
 
-const allowed = (process.env.ALLOWED_ORIGINS || '*').split(',').map(s => s.trim());
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || allowed.includes('*') || allowed.includes(origin)) return cb(null, true);
-    return cb(null, false);
-  }
-}));
+// Public price API; auth is a JWT in the Authorization header (no cookies), so an
+// open CORS policy is safe here and avoids breakage when hosting origins change.
+app.use(cors());
 
 app.get('/api/health', (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 app.use('/api/auth', require('./src/routes/auth'));
