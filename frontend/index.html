@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>SastaScan - Sabse sasta dhundo</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="stylesheet" href="/style.css">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<section id="authScreen" class="screen hidden">
+  <div class="auth-card">
+    <div class="logo">₹</div>
+    <h1>SastaScan</h1>
+    <p class="tag">Product scan karo, sabse sasta online dhundo</p>
+    <div class="auth-tabs">
+      <button id="tabLogin" class="auth-tab active" type="button">Login</button>
+      <button id="tabSignup" class="auth-tab" type="button">Signup</button>
+    </div>
+    <input id="authName" class="input hidden" type="text" placeholder="Naam" autocomplete="name">
+    <input id="authEmail" class="input" type="email" placeholder="Email" autocomplete="email">
+    <input id="authPass" class="input" type="password" placeholder="Password (min 6)" autocomplete="current-password">
+    <button id="authBtn" class="btn primary" type="button">Login</button>
+    <p id="authMsg" class="msg"></p>
+  </div>
+</section>
+
+<!-- SCAN TAB -->
+<section id="scanTab" class="screen hidden">
+  <header class="topbar"><span class="brand">₹ SastaScan</span><button id="logoutBtn" class="link-btn" type="button">Logout</button></header>
+
+  <div id="scanHome">
+    <button id="bigScanBtn" class="big-scan" type="button">
+      <span class="big-scan-icon">▦</span>
+      <span>Scan karo</span>
+      <small>Barcode ya QR - exact same product</small>
+    </button>
+    <button id="photoScanBtn" class="btn ghost" type="button">📷 Photo se dhundo <small>(rough idea, similar products)</small></button>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden">
+    <div class="manual-box">
+      <input id="manualInput" class="input" type="text" placeholder="Barcode number ya product ka naam likho">
+      <button id="manualBtn" class="btn primary" type="button">Search</button>
+    </div>
+  </div>
+
+  <!-- camera scanner -->
+  <div id="scannerView" class="hidden">
+    <div id="qrReader"></div>
+    <button id="closeScanner" class="btn ghost" type="button">Band karo</button>
+  </div>
+
+  <!-- photo result confirm -->
+  <div id="photoView" class="hidden">
+    <p class="hint">Photo mein jo likha dikha, usme se product ka naam chuno / theek karo:</p>
+    <img id="photoPreview" alt="product photo">
+    <div id="ocrLines"></div>
+    <input id="photoText" class="input" type="text" placeholder="Product ka naam">
+    <button id="photoSearchBtn" class="btn primary" type="button">Is naam se prices dhundo</button>
+    <button id="photoCancel" class="btn ghost" type="button">Wapas</button>
+    <p id="ocrStatus" class="msg"></p>
+  </div>
+
+  <!-- results -->
+  <div id="results" class="hidden">
+    <button id="backBtn" class="link-btn" type="button">← Naya scan</button>
+    <div id="productCard"></div>
+    <div id="priceList"></div>
+    <div id="maybeList"></div>
+  </div>
+  <div id="scanMsg" class="msg center"></div>
+</section>
+
+<!-- SALES TAB -->
+<section id="salesTab" class="screen hidden">
+  <header class="topbar"><span class="brand">₹ SastaScan</span><button id="logoutBtn2" class="link-btn" type="button">Logout</button></header>
+  <h2 class="section-title">Apne sheher ki Sales</h2>
+  <p class="hint">Dukaandaar khud apni sale yahan daalte hain - seedha unka data, bina jhooth.</p>
+  <div class="city-row">
+    <input id="cityInput" class="input" type="text" placeholder="Sheher (e.g. Agra)">
+    <button id="locBtn" class="btn ghost" type="button">📍 Meri location</button>
+  </div>
+  <div id="catChips" class="chips"></div>
+  <div id="salesList"></div>
+  <button id="addSaleBtn" class="btn primary wide" type="button">+ Apni dukaan ki sale daalo</button>
+
+  <div id="saleForm" class="hidden card">
+    <h3>Sale listing</h3>
+    <input id="sShop" class="input" placeholder="Dukaan ka naam *">
+    <input id="sAddr" class="input" placeholder="Poora address *">
+    <input id="sCity" class="input" placeholder="Sheher *">
+    <select id="sCat" class="input"></select>
+    <div id="sItems"></div>
+    <button id="sAddItem" class="btn ghost" type="button">+ Item add karo</button>
+    <input id="sValid" class="input" type="date">
+    <textarea id="sDesc" class="input" placeholder="Extra details (offer, timing...)"></textarea>
+    <button id="sSubmit" class="btn primary" type="button">Sale daalo</button>
+    <button id="sCancel" class="btn ghost" type="button">Cancel</button>
+    <p id="saleMsg" class="msg"></p>
+  </div>
+</section>
+
+<nav id="tabbar" class="hidden">
+  <button id="navScan" class="tab active" type="button">▦ Scan</button>
+  <button id="navSales" class="tab" type="button">🏪 Sales</button>
+</nav>
+
+<script src="/app.js"></script>
+</body>
+</html>

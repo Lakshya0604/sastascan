@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#22c55e"/>
+  <g fill="#052e12">
+    <rect x="96" y="150" width="26" height="180"/>
+    <rect x="140" y="150" width="14" height="180"/>
+    <rect x="172" y="150" width="30" height="180"/>
+    <rect x="220" y="150" width="14" height="180"/>
+    <rect x="252" y="150" width="26" height="180"/>
+    <rect x="296" y="150" width="12" height="180"/>
+    <rect x="326" y="150" width="28" height="180"/>
+    <rect x="372" y="150" width="14" height="180"/>
+  </g>
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="120" font-weight="900" fill="#052e12" text-anchor="middle">₹</text>
+</svg>
