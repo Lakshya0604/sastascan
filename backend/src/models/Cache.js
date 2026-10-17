@@ -8,7 +8,7 @@ const priceSchema = new mongoose.Schema({
   key: { type: String, unique: true, index: true }, // barcode or query string
   exact: [Object],
   maybe: [Object],
-  createdAt: { type: Date, default: Date.now, expires: 43200 } // 12h TTL
+  createdAt: { type: Date, default: Date.now, expires: 1800 } // 30 min TTL (code also enforces)
 });
 module.exports = {
   ProductCache: mongoose.models.ProductCache || mongoose.model('ProductCache', productSchema),
