@@ -52,7 +52,14 @@ function storeSearchUrl(merchant, title) {
 
 
 function sizeKey(s) {
-  const m = String(s || '').toLowerCase().match(/(\d+(?:\.\d+)?)\s*(kilograms?|kgs?|grams?|gms?|g|ml\.?|ltr\.?|litres?|l)\b/);
+  const t = String(s || '').toLowerCase();
+  // Multipack "8 x 70g" -> total 560g; "(560g)" total wins when present.
+  let m = t.match(/\((\d+(?:\.\d+)?)\s*(kilograms?|kgs?|grams?|gms?|g|ml\.?|ltr\.?|litres?|l)\)/);
+  if (!m) {
+    const pk = t.match(/(\d+)\s*[x\u00d7]\s*(\d+(?:\.\d+)?)\s*(kilograms?|kgs?|grams?|gms?|g|ml\.?|ltr\.?|litres?|l)\b/);
+    if (pk) m = [null, String(parseFloat(pk[1]) * parseFloat(pk[2])), pk[3]];
+  }
+  if (!m) m = t.match(/(\d+(?:\.\d+)?)\s*(kilograms?|kgs?|grams?|gms?|g|ml\.?|ltr\.?|litres?|l)\b/);
   if (!m) return null;
   let v = parseFloat(m[1]);
   const u = m[2];
@@ -132,6 +139,7 @@ async function fetchPrices(identity, barcode, { approximate = false, queryOverri
     };
     if (approximate && !wantsAccessory && ACC.test(r.title || '')) continue; // phone query -> skip covers/skins
     if (approximate) { maybe.push(offer); continue; }
+    if (!identity) { maybe.push(offer); continue; } // barcode-only fallback: identity unverified, so never exact
     let score = matchScore(identity ? identity.title : '', r.title, identity && identity.brand);
     // Variant checks: multipack/combo, conflicting size, or unverifiable size when the
     // product size is known -> not provably the same SKU, so never "exact".
